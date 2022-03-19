@@ -51,12 +51,14 @@ import {
   newFolderIcon,
   pasteIcon,
   stopIcon,
+  terminalIcon,
   textEditorIcon,
   ToolbarButton
 } from '@jupyterlab/ui-components';
 import { find, IIterator, map, reduce, toArray } from '@lumino/algorithm';
 import { CommandRegistry } from '@lumino/commands';
 import { ContextMenu } from '@lumino/widgets';
+import { ITerminal, Terminal } from '@jupyterlab/terminal';
 
 /**
  * The command IDs used by the file browser plugin.
@@ -123,6 +125,8 @@ namespace CommandIDs {
   export const search = 'filebrowser:search';
 
   export const toggleHiddenFiles = 'filebrowser:toggle-hidden-files';
+
+  export const newTerminal = 'filebrowser:new-terminal';
 }
 
 /**
@@ -792,6 +796,7 @@ function addCommands(
   const trans = translator.load('jupyterlab');
   const { docRegistry: registry, commands } = app;
   const { defaultBrowser: browser, tracker } = factory;
+  const { serviceManager } = app;
 
   commands.addCommand(CommandIDs.del, {
     execute: () => {
@@ -1009,6 +1014,37 @@ function addCommands(
     },
     icon: pasteIcon.bindprops({ stylesheet: 'menuItem' }),
     label: trans.__('Paste'),
+    mnemonic: 0
+  });
+
+  commands.addCommand(CommandIDs.newTerminal, {
+    execute: async () => {
+      const widget = tracker.currentWidget;
+
+      if (widget) {
+        const session = await serviceManager.terminals.startNew();
+
+        const options: Partial<ITerminal.IOptions> = {
+          theme: 'dark',
+          initialCommand: 'echo test'
+        };
+
+        const term = new Terminal(session, options, translator);
+
+        term.title.icon = terminalIcon;
+        term.title.label = '...';
+
+        const main = new MainAreaWidget({ content: term });
+        app.shell.add(main);
+        //void tracker.add(main);
+        app.shell.activateById(main.id);
+        return main;
+
+        // return console.log('create new Terminal');
+      }
+    },
+    icon: pasteIcon.bindprops({ stylesheet: 'menuItem' }),
+    label: trans.__('New Terminal'),
     mnemonic: 0
   });
 
