@@ -1023,12 +1023,11 @@ function addCommands(
       const widget = tracker.currentWidget;
 
       if (widget) {
-        const session = await serviceManager.terminals.startNew();
-
         const options: Partial<ITerminal.IOptions> = {
-          theme: 'dark',
-          initialCommand: 'echo test'
+          theme: 'dark'
         };
+
+        const session = await serviceManager.terminals.startNew();
 
         const term = new Terminal(session, options, translator);
 
@@ -1037,11 +1036,13 @@ function addCommands(
 
         const main = new MainAreaWidget({ content: term });
         app.shell.add(main);
-        //void tracker.add(main);
         app.shell.activateById(main.id);
-        return main;
 
-        // return console.log('create new Terminal');
+        term.session.send({
+          type: 'stdin',
+          content: ['cd notebooks' + '\r']
+        });
+        return main;
       }
     },
     icon: pasteIcon.bindprops({ stylesheet: 'menuItem' }),
